@@ -31,7 +31,3 @@ And when you're ready to publish your site, run the following command. The resul
 ```
 npm run build
 ```
-
-## Target Image
-
-![Target Image](example-tracking-image.png)
