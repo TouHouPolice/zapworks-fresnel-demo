@@ -1,6 +1,6 @@
 import React, { useEffect,useState ,useCallback,Suspense} from 'react';
 import { ZapparCamera, ImageTracker, ZapparCanvas} from '@zappar/zappar-react-three-fiber';
-import {useLoader,Canvas} from "@react-three/fiber"
+import {useLoader,Canvas,useThree} from "@react-three/fiber"
 import * as THREE from "three";
 import DatGui, { DatNumber} from 'react-dat-gui';
 
@@ -32,7 +32,7 @@ let fresnelMaterial=extendMaterial(THREE.MeshPhongMaterial,{
   vertex: {
     // Inserts the line after #include <fog_vertex>
     '#include <fog_vertex>': `
-
+    
 
       mat4 LM = modelMatrix;
       LM[2][3] = 0.0;
@@ -42,7 +42,7 @@ let fresnelMaterial=extendMaterial(THREE.MeshPhongMaterial,{
 
       vec4 GN = LM * vec4(objectNormal.xyz, 1.0);
       vNN = normalize(GN.xyz);
-      vEye = normalize(GN.xyz-cameraPosition);`
+      vEye = normalize(GN.xyz-cameraPosition);`   //cameraPosition
   },
   fragment: {
     'gl_FragColor = vec4( outgoingLight, diffuseColor.a );' : `
@@ -58,20 +58,23 @@ gl_FragColor.rgb +=  ( 1.0 - -min(dot(vEye, normalize(vNN) ), 0.0) ) * fresnelCo
   uniforms: {
     //diffuse: new THREE.Color( 'black' ),
     fresnelColor: new THREE.Color( 0.00000,0.13333,0.58039 ),
-    map:texture
+    map:texture,
+    cameraPosition:new THREE.Vector3(0,0,10),
   }
 
   
 })
 
-
+// console.log(fresnelMaterial.uniforms)
+// console.log(fresnelMaterial.vertexShader)
+// console.log(fresnelMaterial.fragmentShader)
 
 function App() {
 
     const [transformData,setTransformData]=useState({
       x:0,  //position
       y:-10,
-      z:-10,
+      z:0,
       masterScale:1, //scale of group
     })
 
@@ -79,18 +82,17 @@ function App() {
     return (
       <>
       
-      {/* <ZapparCanvas>
+      <ZapparCanvas>
         <Suspense fallback={null}>
-          <ZapparCamera userCameraMirrorMode="poses" rearCameraMirrorMode="none" />
           <Scene transformData={transformData} ></Scene>
         </Suspense>
-      </ZapparCanvas> */}
+      </ZapparCanvas>
       
-      <Canvas>
+      {/* <Canvas camera={{position:[0,0,0]}}>
         <Suspense fallback={null}>
           <Scene transformData={transformData} ></Scene>
         </Suspense>
-      </Canvas>
+      </Canvas> */}
 
 
 
@@ -117,10 +119,21 @@ function Scene(props){
 
   const [visibility, setVisibility] = useState(false);  //whether the mesh is visible
 
+  const {camera} = useThree();
+
+  
+
+  useEffect(() => {
+    
+    console.log(camera)
+    //camera.position.z=5;
+  }, [camera]);
+
   //set group when it's loaded
   const onGroupRefChange = useCallback(node => {
     if(node){
       setGroup(node);
+      camera.poseAnchorOrigin=group;
     }
   }, []);
 
@@ -158,16 +171,21 @@ function Scene(props){
 
   return (
     <>
+    <ZapparCamera userCameraMirrorMode="poses" rearCameraMirrorMode="none" />
+    <ImageTracker targetImage={tracker}>
+      <primitive 
+        visible={true}
+        position={[transformData.x,transformData.y,transformData.z]}
+        scale={[transformData.masterScale,transformData.masterScale,transformData.masterScale]}
+        object={obj1} 
+        material={material}
+        ref={onGroupRefChange}>
+      </primitive>
     
-    {/* <ImageTracker targetImage={tracker}></ImageTracker> */}
-    <primitive 
-      visible={true}
-      position={[transformData.x,transformData.y,transformData.z]}
-      scale={[transformData.masterScale,transformData.masterScale,transformData.masterScale]}
-      object={obj1} 
-      material={material}
-      ref={onGroupRefChange}>
-    </primitive>
+    </ImageTracker>
+
+    
+    
     
     <ambientLight intensity={0.1}></ambientLight>
       
