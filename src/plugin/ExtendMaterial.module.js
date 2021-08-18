@@ -754,6 +754,10 @@ const mappings = {
 		id: 'meshphysical',
 		name: 'physical'
 	},
+	MeshPhysicalMaterial: {
+		id: 'meshphysical',
+		name: 'physical'
+	},
 	MeshPhongMaterial: {
 		id: 'meshphong',
 		name: 'phong'
